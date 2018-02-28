@@ -20,6 +20,7 @@ In Elixir you can create blocks by surrounding any number
 of expressions between parens and separating them by using
 either a new line or `;`.
 
+```elixir
     # An inline block
     iex> {:__block__, _, items} = quote do: (1 ; 2 ; 3)
     iex> items
@@ -34,6 +35,7 @@ either a new line or `;`.
     ...> )
     iex> items
     [:one, 2, 3, "four"]
+```
 
 
 ## The `Blue.blue/1` macro
@@ -49,6 +51,7 @@ The `blue/1` macro takes a single program and works by
 transforming its list of items into valid Elixir AST
 for function application.
 
+```elixir
     # Call blue with a program
     iex> (blue 1) == (1) |> blue
     true
@@ -73,6 +76,7 @@ for function application.
     # Remember this is just Elixir itself dressed as blue lisp.
     iex> (blue (1 ; 2))
     ** (BadFunctionError) expected a function, got: 1
+```
 
 ## BLUE is also a Bracket LISP
 
@@ -80,6 +84,7 @@ Sometimes using BLUE's Bracket syntax can be useful,
 for example when working with Keyword, or just if you
 prefer not to use Blocks everywhere.
 
+```elixir
     # A list syntax can also be given to blue
     iex> (blue [is_atom, :hello])
     true
@@ -91,6 +96,7 @@ prefer not to use Blocks everywhere.
     ...>   (blue [tuple_size, hello: :world])
     ...> ))
     "2"
+```
 
 
 ## Everything happens at compile time
@@ -99,6 +105,7 @@ All the `blue/1` macro does is: given a list of items
 it expects the first to be a partial function application
 and merely appends the rest of items to it as arguments.
 
+```elixir
     # Keyword.get([hello: "world], :hola, "mundo")
     iex> (blue (
     ...>   Keyword.get([hello: "world"])
@@ -131,6 +138,7 @@ and merely appends the rest of items to it as arguments.
     # Same for function references
     iex> (blue (apply ; &Macro.underscore/1 ; [Blue.Velvet] ))
     "blue/velvet"
+```
 
 ## Special forms
 
@@ -143,6 +151,7 @@ is to make functions take a list as last argument.
 
 Using `&rest` captures the following items in a list as a single argument.
 
+```elixir
     # Use it on any function taking lists at last argument
     iex> (blue (Enum.max; &rest; 4; 3; 8; 2))
     8
@@ -150,11 +159,13 @@ Using `&rest` captures the following items in a list as a single argument.
     # And you can also use it with Bracket syntax
     iex> (blue [OptionParser.parse, &rest, "velvet.bv"])
     {[], ["velvet.bv"], []}
+```
 
 
 For example `Kernel.apply/2` takes a function and a list of arguments
 to apply to it.
 
+```elixir
     iex> (blue (apply; fn x -> x end; [99]))
     99
 
@@ -164,11 +175,13 @@ to apply to it.
     ...>    12
     ...>    2))
     24
+```
 
 Actually many functions in Elixir take a keyword as last argument, most
 commonly for options. In these cases it's better to use Bracket LISP
 as it's much easy to use with keywords.
 
+```elixir
     # same as: OptionParser.parse(["-v", "-v"], [aliases: [v: :verbose], strict: [verbose: :count]])
     iex> (blue [
     ...>   OptionParser.parse,
@@ -176,22 +189,26 @@ as it's much easy to use with keywords.
     ...>   &rest, aliases: [v: :verbose], strict: [verbose: :count]
     ...> ])
     {[verbose: 2], [], []}
+```
 
 ### Blocks strike back
 
 Since normal block syntax is used as function application inside BLUE LISP, the only way to
 acutally create a block of multiple expressions is by using the `progn` form.
 
+```elixir
     iex> (blue (progn
     ...>    (a = 3 * 4)
     ...>    (min; 20; a)
     ...> ))
     12
+```
 
 ### under`_`lisp
 
 `_` is a convenience that comes handy when using common Elixir forms
 
+```elixir
     iex> (blue _(if, 1 < 2, do: 22))
     22
 
@@ -202,6 +219,7 @@ acutally create a block of multiple expressions is by using the `progn` form.
     # if you use Brackets you need to use &rest to capture the keyword tuples
     iex> (blue [if, 1 < 2, &rest, do: 22])
     22
+```
 
 ## `use Blue` on `.ex` files.
 
@@ -210,11 +228,13 @@ The `mix format` tool however will not play nicely with lispy aesthetics.
 
 As an example, see `blue_test.exs` file.
 
+```elixir
     use Blue, do: (progn
       _(defmodule BlueTest, do: (progn
         (use ExUnit.Case)
         (doctest Blue)
       )))
+```
 
 
 
