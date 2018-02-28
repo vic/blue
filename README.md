@@ -1,5 +1,7 @@
 # BLUE LISP - Block Lisp Underneath Elixir.
 
+ <a href="https://travis-ci.org/vic/blue"><img src="https://travis-ci.org/vic/blue.svg"></a>
+
 [https://hexdocs.pm/blue](https://hexdocs.pm/blue).
 
 A minimalist LISP toy abusing Elixir own syntax.
