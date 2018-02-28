@@ -1,5 +1,17 @@
-defmodule BlueTest do
-  use ExUnit.Case
-  import Blue
-  doctest Blue
-end
+use Blue,
+  do:
+    (
+      progn
+
+      _(
+        defmodule(
+          BlueTest,
+          do:
+            (
+              progn
+              use ExUnit.Case
+              doctest Blue
+            )
+        )
+      )
+    )

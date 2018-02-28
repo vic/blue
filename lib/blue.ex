@@ -130,8 +130,9 @@ defmodule Blue do
       iex> (blue (apply ; &Macro.underscore/1 ; [Blue.Velvet] ))
       "blue/velvet"
 
+  ## Special forms
 
-  ## `&rest` arguments
+  ### `&rest` arguments
 
   Functions in Erlang/Elixir have fixed arity, that is, they cannot
   take a variable number of arguments. To work around this, the convention
@@ -174,43 +175,80 @@ defmodule Blue do
       ...> ])
       {[verbose: 2], [], []}
 
+  ### Blocks strike back
 
-  ## Elixir forms
+  Since normal block syntax is used as function application inside BLUE LISP, the only way to
+  acutally create a block of multiple expressions is by using the `progn` form.
+
+      iex> (blue (progn
+      ...>    (a = 3 * 4)
+      ...>    (min; 20; a)
+      ...> ))
+      12
+
+  ### under`_`lisp
+
+  `_` is a convenience that comes handy when using common Elixir forms
+
+      iex> (blue _(if, 1 < 2, do: 22))
+      22
+
+      # if you use Blocks you need to actually write the keyword brackets
+      iex> (blue (if ; 1 < 2 ; [do: 22]))
+      22
+
+      # if you use Brackets you need to use &rest to capture the keyword tuples
+      iex> (blue [if, 1 < 2, &rest, do: 22])
+      22
+
+  ## `use Blue` on `.ex` files.
+
+  Since BLUE programs use only valid Elixir syntax, you can write LISP programs on `ex` files.
+  The `mix format` tool however will not play nicely with lispy aesthetics.
+
+  As an example, see `blue_test.exs` file.
+
+      use Blue, do: (progn
+        _(defmodule BlueTest, do: (progn
+          (use ExUnit.Case)
+          (doctest Blue)
+        )))
 
 
 
   """
 
-  @doc """
-  Transforms the given literal Blue code into Elixir
-  """
-  defmacro blue(code)
+  @doc false
+  defmacro __using__(do: code) do
+    quote do
+      import Blue
+      unquote(Macro.prewalk(code, &prewalk/1))
+    end
+  end
 
-  defmacro blue(do: code), do: Macro.prewalk(code, &blue_prewalk/1)
+  defmacro blue(code) when is_list(code), do: Macro.prewalk({:_, [], code}, &prewalk/1)
+  defmacro blue(code), do: Macro.prewalk(code, &prewalk/1)
 
-  defmacro blue(code) when is_list(code),
-    do: Macro.prewalk({:__block__, [], code}, &blue_prewalk/1)
+  defp prewalk({:__block__, m, [{:progn, _, x} | r]}) when is_atom(x), do: {:__block__, m, r}
 
-  defmacro blue(code), do: Macro.prewalk(code, &blue_prewalk/1)
-
-  defp blue_prewalk({:__block__, meta, [head | rest]}) do
+  defp prewalk({ul, meta, [head | rest]}) when ul == :__block__ or ul == :_ do
     case Macro.decompose_call(head) do
       {name, first} -> {name, meta, first ++ rest}
       {remote, name, first} -> {{:., meta, [remote, name]}, meta, first ++ rest}
       :error -> {{:., meta, [head]}, meta, rest}
     end
-    |> amp_rest
+    |> rest
   end
 
-  defp blue_prewalk(code), do: code
+  defp prewalk(code), do: code
 
-  defp amp_rest?({:&, _, [{:rest, _, a}]}) when is_atom(a), do: true
-  defp amp_rest?([{:&, _, [{:rest, _, a}]}]) when is_atom(a), do: true
-  defp amp_rest?(_), do: false
+  defp rest?({:&, _, [{:rest, _, a}]}) when is_atom(a), do: true
+  defp rest?([{:&, _, [{:rest, _, a}]}]) when is_atom(a), do: true
+  defp rest?(_), do: false
 
-  defp amp_rest({f, meta, args}) do
-    {args, rest} = args |> Enum.split_while(&(!amp_rest?(&1)))
-    rest = rest |> Stream.chunk_by(&amp_rest?/1) |> Enum.reject(&amp_rest?/1)
+  defp rest({f, meta, args}) do
+    {args, rest} = args |> Enum.split_while(&(!rest?(&1)))
+    rest = rest |> Stream.chunk_by(&rest?/1) |> Enum.reject(&rest?/1)
     {f, meta, args ++ rest}
   end
 end
