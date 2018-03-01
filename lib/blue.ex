@@ -47,7 +47,9 @@ defmodule Blue do
   transforming its list of items into valid Elixir AST
   for function application.
 
+
       # Call blue with a program
+      iex> import Blue
       iex> (blue 1) == (1) |> blue
       true
 
@@ -61,6 +63,10 @@ defmodule Blue do
       ...>    1
       ...>    2))
       3
+
+      # An atom can be used for calling operators
+      iex> (blue (:*; 2; 3))
+      6
 
       # Calling remote functions also works
       iex> (blue (Macro.camelize ; "blue_velvet"))
@@ -201,6 +207,7 @@ defmodule Blue do
       iex> (blue [if, 1 < 2, &rest, do: 22])
       22
 
+
   ## `use Blue` on `.ex` files.
 
   Since BLUE programs use only valid Elixir syntax, you can write LISP programs on `ex` files.
@@ -235,6 +242,7 @@ defmodule Blue do
     case Macro.decompose_call(head) do
       {name, first} -> {name, meta, first ++ rest}
       {remote, name, first} -> {{:., meta, [remote, name]}, meta, first ++ rest}
+      :error when is_atom(head) -> {head, meta, rest}
       :error -> {{:., meta, [head]}, meta, rest}
     end
     |> rest
