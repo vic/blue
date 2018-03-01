@@ -266,7 +266,7 @@ defmodule Blue do
 
   defp prewalk(code), do: code
 
-  def reduce([fun | rest]), do: Enum.reduce(rest, fn a, b -> {fun, [], [b, a]} end)
+  defp reduce([fun | rest]), do: Enum.reduce(rest, fn a, b -> {fun, [], [b, a]} end)
 
   defp rest?({:&, _, [{:rest, _, a}]}) when is_atom(a), do: true
   defp rest?([{:&, _, [{:rest, _, a}]}]) when is_atom(a), do: true
