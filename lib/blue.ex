@@ -200,7 +200,7 @@ defmodule Blue do
 
   ### :pipe
 
-  Since piping is so common in Elixir `:pipe`` is a shortcut for `[:reduce, :|>, ...]`
+  Since piping is so common in Elixir `:pipe` is a shortcut for `[:reduce, :|>, ...]`
 
       iex> (blue (:pipe
       ...>   0..5
