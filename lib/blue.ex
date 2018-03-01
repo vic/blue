@@ -182,13 +182,27 @@ defmodule Blue do
 
   ### The `:reduce` form
 
+  Can be used to apply 2-arity functions or operators in a lisp-like way.
+
       # will expand to ((1 + 2) + 3) at compile time
       iex> (blue [:reduce, :+, 1, 2, 3])
       6
 
-      # can be used with the pipe operator
+      # when used with Elixir's pipe operator
       iex> (blue (:reduce
       ...>   :|>
+      ...>   0..5
+      ...>   Stream.map(fn x -> x * x  end)
+      ...>   Enum.reduce(&+/2)
+      ...>   to_string
+      ...> ))
+      "55"
+
+  ### :pipe
+
+  Since piping is so common in Elixir `:pipe`` is a shortcut for `[:reduce, :|>, ...]`
+
+      iex> (blue (:pipe
       ...>   0..5
       ...>   Stream.map(fn x -> x * x  end)
       ...>   Enum.reduce(&+/2)
@@ -257,6 +271,7 @@ defmodule Blue do
     case Macro.decompose_call(head) do
       {name, first} -> {name, meta, first ++ rest}
       {remote, name, first} -> {{:., meta, [remote, name]}, meta, first ++ rest}
+      :error when head == :pipe -> reduce([:|>] ++ rest)
       :error when head == :reduce -> reduce(rest)
       :error when is_atom(head) -> {head, meta, rest}
       :error -> {{:., meta, [head]}, meta, rest}
