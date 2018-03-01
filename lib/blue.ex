@@ -64,7 +64,7 @@ defmodule Blue do
       ...>    2))
       3
 
-      # An atom can be used for calling operators
+      # Any atom can be used for calling operators or local functions
       iex> (blue (:*; 2; 3))
       6
 
@@ -115,7 +115,6 @@ defmodule Blue do
       # Thats why the anon function wont be called here
       iex> (blue (fn -> 9 end)) |> is_function
       true
-
 
 
       # The following would produce a compilation error.
@@ -181,6 +180,22 @@ defmodule Blue do
       ...> ])
       {[verbose: 2], [], []}
 
+  ### The `:reduce` form
+
+      # will expand to ((1 + 2) + 3) at compile time
+      iex> (blue [:reduce, :+, 1, 2, 3])
+      6
+
+      # can be used with the pipe operator
+      iex> (blue (:reduce
+      ...>   :|>
+      ...>   0..5
+      ...>   Stream.map(fn x -> x * x  end)
+      ...>   Enum.reduce(&+/2)
+      ...>   to_string
+      ...> ))
+      "55"
+
   ### Blocks strike back
 
   Since normal block syntax is used as function application inside BLUE LISP, the only way to
@@ -242,6 +257,7 @@ defmodule Blue do
     case Macro.decompose_call(head) do
       {name, first} -> {name, meta, first ++ rest}
       {remote, name, first} -> {{:., meta, [remote, name]}, meta, first ++ rest}
+      :error when head == :reduce -> reduce(rest)
       :error when is_atom(head) -> {head, meta, rest}
       :error -> {{:., meta, [head]}, meta, rest}
     end
@@ -249,6 +265,8 @@ defmodule Blue do
   end
 
   defp prewalk(code), do: code
+
+  def reduce([fun | rest]), do: Enum.reduce(rest, fn a, b -> {fun, [], [b, a]} end)
 
   defp rest?({:&, _, [{:rest, _, a}]}) when is_atom(a), do: true
   defp rest?([{:&, _, [{:rest, _, a}]}]) when is_atom(a), do: true
