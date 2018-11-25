@@ -1,4 +1,4 @@
-# BLUE LISP - Barely Lisp Under Elixir.
+# Blue Velvet LISP - Barely Lisp Under Elixir.
 
 <a href="https://travis-ci.org/vic/blue"><img src="https://travis-ci.org/vic/blue.svg"></a>
 [hexdocs](https://hexdocs.pm/blue).
